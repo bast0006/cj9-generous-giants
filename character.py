@@ -38,7 +38,7 @@ class Character:
         self.__vitality = vitality if vitality is not None else randint(self.STAT_MIN, self.STAT_MAX)
         self.__intel = intel if intel is not None else randint(self.STAT_MIN, self.STAT_MAX)
         self.__dexterity = dexterity if dexterity is not None else randint(self.STAT_MIN, self.STAT_MAX)
-        self.items = items
+        self.__items = items
         self.update_derived_stats()
         self._regen = True  # Health and mana regeneration are on by default
 
@@ -94,6 +94,21 @@ class Character:
         self.__dexterity = value
         self.update_derived_stats()
 
+    @property
+    def items(self):
+        """Returns list of character's items"""
+        return self.__items
+
+    def add_item(self, item):
+        """Adds item to player inventory if not already there (should we allow multiples?)"""
+        if item not in self.items:
+            self.items.append(item)
+
+    def remove_item(self, item):
+        """Removes item from player inventory"""
+        if item in self.items:
+            self.items.remove(item)
+
     def update_derived_stats(self):
         """
         Generate derived stats based on base stats.
@@ -147,6 +162,13 @@ if __name__ == '__main__':
     print(f'Player health {player.health} mana {player.mana} before update')
     player.update()
     print(f'Player health {player.health} mana {player.mana} after update with regen {player._regen}')
-    assert player.health > 10 and player.mana > 10
     player.toggle_regen()
     print(f'Player health {player.health} mana {player.mana} after update with regen {player._regen}')
+
+    # Test adding and removing items
+    print(f'Current items {player.items}')
+    player.add_item('rusty dagger')
+    player.add_item('wooden shield')
+    print(f'Updated items {player.items}')
+    player.remove_item('rusty dagger')
+    print(f'Items after disarming the player {player.items}')
