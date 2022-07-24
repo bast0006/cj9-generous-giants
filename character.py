@@ -11,8 +11,8 @@ class Character:
     Derived stats:  health, health regen rate, mana, mana regen rate, base armor, damage multiplier
     """
 
-    STAT_MIN, STAT_MAX = 3, 18  # As if they are 3d6 dice rolls
     REGEN_INTERVAL = 1.0  # health/mana regen interval in seconds
+    STAT_MAX = 18  # as if rolling 3d6 for stats
 
     def __init__(self,
                  x: int = 0,
@@ -34,10 +34,10 @@ class Character:
         self.y = y
         self.dx = dx
         self.dy = dy
-        self.__strength = strength if strength is not None else randint(self.STAT_MIN, self.STAT_MAX)
-        self.__vitality = vitality if vitality is not None else randint(self.STAT_MIN, self.STAT_MAX)
-        self.__intel = intel if intel is not None else randint(self.STAT_MIN, self.STAT_MAX)
-        self.__dexterity = dexterity if dexterity is not None else randint(self.STAT_MIN, self.STAT_MAX)
+        self.__strength = self.roll_stat(strength)
+        self.__vitality = self.roll_stat(vitality)
+        self.__intel = self.roll_stat(intel)
+        self.__dexterity = self.roll_stat(dexterity)
         self.__items = items
         self.update_derived_stats()
         self._regen = True  # Health and mana regeneration are on by default
@@ -53,6 +53,10 @@ class Character:
             items {self.items}
         """
         return char_info
+
+    def roll_stat(self, stat):
+        """Rolls 3d6 stat value if none is provided"""
+        return stat if stat is not None else randint(1, 6) + randint(1, 6) + randint(1, 6)
 
     @property
     def strength(self):
