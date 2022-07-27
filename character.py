@@ -14,17 +14,18 @@ class Character:
     REGEN_INTERVAL = 1.0  # health/mana regen interval in seconds
     STAT_MAX = 18  # as if rolling 3d6 for stats
 
-    def __init__(self,
-                 x: int = 0,
-                 y: int = 0,
-                 dx: int = 0,
-                 dy: int = 0,
-                 strength: int = None,
-                 vitality: int = None,
-                 intel: int = None,
-                 dexterity: int = None,
-                 items: list = []
-                 ):
+    def __init__(
+        self,
+        x: int = 0,
+        y: int = 0,
+        dx: int = 0,
+        dy: int = 0,
+        strength: int = None,
+        vitality: int = None,
+        intel: int = None,
+        dexterity: int = None,
+        items: list = []
+    ):
         """
         Character initialization.  Generates random base stats if not provided upon creating the class instance.
 
@@ -131,24 +132,23 @@ class Character:
 
     def toggle_regen(self, state: bool = None):
         """Turns regeneration on or off (True/False) or toggles current value with no parameter"""
-        if state is None:
-            self._regen = not self._regen
-        elif state:
-            self._regen = True
-        else:
-            self._regen = False
+        self._regen = not self._regen if state is None else state
 
-    def regen(self):
+    def regen(self, dt):
         """Update health and mana if regen is active"""
         if self._regen:
-            self.health = min(self.health + self.health_regen, self.base_health)
-            self.mana = min(self.mana + self.mana_regen, self.base_mana)
+            self.health = min(self.health + int(dt * self.health_regen), self.base_health)
+            self.mana = min(self.mana + int(dt * self.mana_regen), self.base_mana)
 
-    def update(self):
-        """Update character stats and position"""
-        self.regen()
-        self.x += self.dx
-        self.y += self.dy
+    def update(self, dt: float):
+        """
+        Update character stats and position.
+
+        Parameter dt is elapsed time since last update, in seconds.
+        """
+        self.regen(dt)
+        self.x += int(dt * self.dx)
+        self.y += int(dt * self.dy)
 
 
 if __name__ == '__main__':
@@ -164,10 +164,11 @@ if __name__ == '__main__':
     # Test regen
     player.health, player.mana = 10, 10
     print(f'Player health {player.health} mana {player.mana} before update')
-    player.update()
-    print(f'Player health {player.health} mana {player.mana} after update with regen {player._regen}')
+    player.update(1.5)
+    print(f'Player health {player.health} mana {player.mana} after 1.5s update with regen {player._regen}')
     player.toggle_regen()
-    print(f'Player health {player.health} mana {player.mana} after update with regen {player._regen}')
+    player.update(1.5)
+    print(f'Player health {player.health} mana {player.mana} after 1.5s update with regen {player._regen}')
 
     # Test adding and removing items
     print(f'Current items {player.items}')
