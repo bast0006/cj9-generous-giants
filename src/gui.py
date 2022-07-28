@@ -15,10 +15,12 @@ class Button():
     as well as a scale argument for resizing.
     """
 
-    def __init__(self, x, y, image, scale):
+    def __init__(self, x: int, y: int, image, scale: int):
         """Initialization
 
-        Creates instance of button class object
+        Creates instance of button class object which then
+        gets turned into a rect object for keeping track of
+        different points on the surface
         """
         width = image.get_width()
 
@@ -30,9 +32,27 @@ class Button():
 
         self.rect.topleft = (x, y)
 
-    def draw(self):
+        self.clicked = False
+
+    def draw(self, target: pygame.Surface) -> list[pygame.Rect]:
         """Draw Method
 
-        This method will draw the button on the screen
+        This method will draw the button onto the target param
+        and return the changed pixels as a list
         """
-        screen.blit(self.image, (self.rect.x, self.rect.y))
+        return self.image.blit(target, dest=(self.x, self.y))
+
+    def update(self, event_list, redraw=False):
+        """Update method
+
+        This method will return True or False based on whether or
+        not the button has been clicked.
+        """
+        mouse_pos = pygame.mouse.get_pos()
+
+        if self.rect.collidepoint(mouse_pos):
+            if pygame.mouse.get_pressed()[0]:
+                redraw = True
+                return redraw
+            else:
+                return False
