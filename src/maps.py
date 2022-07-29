@@ -1,4 +1,4 @@
-import random
+from datetime import datetime
 from typing import Tuple
 
 import noise
@@ -13,15 +13,30 @@ class mapGen:
     It then can export the map to a text file
     """
 
-    def __init__(self, shape: Tuple[int, int], seed: int = None):
-        self.seed = seed
-        random.seed(self.seed)
+    def __init__(
+        self,
+        shape: Tuple[int, int],
+        seed: int = None,
+        freq: int = 3,
+        amplitude: int = 10,
+        resolution: int = 50,
+    ):
+        """Initalizes all the important variables for map generation
+
+        Args:
+            shape (Tuple[int, int]): This determines the size of the map.
+            seed (int, optional): This is the seed the map is generated based on. Defaults to None.
+            freq (int, optional): This will ajust how often peaks and troughs show up. Defaults to 3.
+            amplitude (int, optional): This will ajust the severity of said peaks and troughs. Defaults to 10.
+            resolution (int, optional): This controls the "zoom" of map
+            so a higher number will make bodies larger and a lower will do the inverse. Defaults to 50.
+        """
+        self.seed = seed or int(str(datetime.now().time().microsecond)[:-4])
         self.shape = shape
-        self.octaves = (random.random() * 0.5) + 0.5
-        self.freq = 16 * self.octaves
-        self.persistence = 0.5
-        self.lacunarity = 2.0
+        self.freq = freq
         self.world = np.zeros(self.shape)
+        self.amplitude = amplitude
+        self.resolution = resolution
 
     def __str__(self) -> str:
         return "\n".join(
@@ -33,12 +48,12 @@ class mapGen:
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 n = (
-                    noise.pnoise2(
-                        i / self.freq,
-                        j / self.freq,
+                    noise.pnoise3(
+                        i / self.resolution * self.freq,
+                        j / self.resolution * self.freq,
+                        self.seed / self.resolution * self.freq,
                     )
-                    * 10
-                    + 3
+                    * self.amplitude
                 )
 
                 self.world[i][j] = n
@@ -54,8 +69,8 @@ class mapGen:
         Take anything past 1/2 of the way between mean and min and convert to 1
         Make the rest of the map 2
         """
-        flowerLevel = ((self.world.max() - self.world.mean()) * 0.5) + self.world.mean()
-        waterLevel = ((self.world.min() - self.world.mean()) * 0.5) + self.world.mean()
+        flowerLevel = ((self.world.max() - self.world.mean()) * 0.65) + self.world.mean()
+        waterLevel = ((self.world.min() - self.world.mean()) * 0.65) + self.world.mean()
 
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
@@ -76,7 +91,7 @@ if __name__ == "__main__":
     from os import remove
 
     width = 100
-    heigth = 30
+    heigth = 100
     mapGenerator = mapGen((heigth, width))
     print(f"Map generator initialized for a {heigth}x{width} map.\n")
 
