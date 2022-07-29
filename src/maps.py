@@ -1,8 +1,10 @@
 from datetime import datetime
+from enum import Enum
 from typing import Tuple
 
 import noise
 import numpy as np
+import pygame
 
 
 class mapGen:
@@ -86,9 +88,79 @@ class mapGen:
         with open(filename, "w") as f:
             f.write(str(self).replace("0", "F").replace("1", "W").replace("2", "G"))
 
+    def _makeMap(self):
+        """Make a new map."""
+        self.generateNoise()
+        self.convert()
+
+    def newMap(self, seed: int = None):
+        """Generate a new map."""
+        self.seed = seed or int(str(datetime.now().time().microsecond)[:-4])
+        print(self.seed)
+
+        self._makeMap()
+
+
+class mapLegend(Enum):
+    """Enum for the map file's notation."""
+
+    WATER = "W"
+    GRASS = "G"
+    FLOWER = "F"
+
+
+class mapSprite:
+    """Sprite for the map.
+
+    It has a position and a sprite.
+    It can be drawn to the screen.
+    """
+
+    def __init__(self, mapFileDir):
+        self.registerNewMap(mapFileDir)
+
+    def update(self, screen: pygame.Surface, _):
+        """Draw the map out on the screen"""
+        rects = []
+        for indexY, row in enumerate(self._map):
+            for indexX, collum in enumerate(row):
+                rects.append(
+                    pygame.draw.rect(
+                        screen,
+                        self.getKeyColor(collum),
+                        (16 * indexY, 16 * indexX, 16, 16),
+                    )
+                )
+        return rects
+
+    def getKeyColor(self, key: mapLegend) -> pygame.Color:
+        """Get the color of a key."""
+        color = pygame.Color(0, 0, 0)
+        match key:
+            case mapLegend.WATER.value:
+                color.b = 184
+                color.g = 94
+            case mapLegend.GRASS.value:
+                color.g = 55
+                color.r = 13
+                color.b = 13
+            case mapLegend.FLOWER.value:
+                color.r = 255
+                color.g = 3
+                color.b = 62
+
+        return color
+
+    def registerNewMap(self, mapFileDir: str):
+        """Change the map being used."""
+        with open(mapFileDir, "r") as f:
+            self._map = list(list(i) for i in (f.read().split("\n")))
+
 
 if __name__ == "__main__":
     from os import remove
+
+    from game import Game
 
     width = 100
     heigth = 100
@@ -114,6 +186,26 @@ if __name__ == "__main__":
     print(f"exported to {exportDir}\n")
     with open(exportDir, "r") as f:
         print(f.read())
+
+    sprite = mapSprite(exportDir)
+    print("\n\n" + str(sprite._map))
+
+    game = Game()
+    game.add_sprite(0, sprite)
+
+    def newMap(evt: pygame.event.Event):
+        """Render a new map when r is pressed."""
+        if evt.key == pygame.K_r:
+            mapGenerator.newMap()
+            print(f"\n\n {mapGenerator}")
+            mapGenerator.export(exportDir)
+            sprite.registerNewMap(exportDir)
+
+    game.add_handler(
+        newMap,
+        pygame.KEYDOWN,
+    )
+    game.start()
 
     remove(exportDir)
     print(f"\n{exportDir} removed\n")
