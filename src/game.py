@@ -51,8 +51,10 @@ class Game:
 
         for mode in nice_modes:
             if mode[0] < 0.7*native_mode[0]:
-                print("Selected display mode:", mode)
-                return mode
+                if mode[0] >= 1200 and mode[1] >= 800:
+                    print("Selected display mode:", mode)
+                    return mode
+        return 1200, 800
 
     def add_handler(self, func: callable, *event_types) -> None:
         """Register an event handler, which will be called on all events of a matching type."""
