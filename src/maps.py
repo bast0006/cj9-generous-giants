@@ -36,7 +36,7 @@ class MapGen:
             resolution (int, optional): This controls the "zoom" of map
             so a higher number will make bodies larger and a lower will do the inverse. Defaults to 50.
         """
-        self.seed = seed or self._seed_generator()
+        self.seed = seed or self.generate_seed()
         self.shape = shape
         self.freq = freq
         self.world = np.zeros(self.shape)
@@ -63,15 +63,18 @@ class MapGen:
 
                 self.world[i][j] = n
 
-    def _string_hashcode(self, s):
+    @staticmethod
+    def _string_hashcode(s):
         h = 0
         for c in s:
             h = (31 * h + ord(c)) & 0xFFFFFFFF
         return ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
 
-    def _seed_generator(self):
+    @classmethod
+    def generate_seed(cls):
+        """Generate a new random seed for use in maps."""
         microsecond = str(datetime.now().time().microsecond)
-        return int(self._string_hashcode(microsecond))
+        return int(cls._string_hashcode(microsecond))
 
     def convert(self):
         """Convert to ints
@@ -114,7 +117,7 @@ class MapGen:
 
     def new_map(self, seed: int = None):
         """Generate a new map."""
-        self.seed = seed or self._seed_generator()
+        self.seed = seed or self.generate_seed()
 
         self._make_map()
 
