@@ -270,8 +270,19 @@ class GameManager:
                         raise Exception(f'Game over for player {pid}')
                     case 'Help':
                         await websocket.send('Use /nick [name], /join [room], and /start!')
+                    case 'Start Game':
+                        await websocket.send('Enter Room ID')
+                        rid = await websocket.recv()
+                        await websocket.send('Enter World Seed')
+                        seed = await websocket.recv()
+                        await self.broadcast_messages(int(rid), "Start Game")
+                        await self.broadcast_messages(int(rid), seed)
+                    case 'List Players':
+                        await websocket.send('Enter Room ID')
+                        rid = await websocket.recv()
+                        await self.list_players(websocket, rid)
                     case _:
-                        info, remainder_message = message.split(":")
+                        info, remainder_message = message.split(":", maxsplit=1)
                         pid = int(info.split("###")[-1])
 
                         output = await self.send_messages_in_chat(pid, remainder_message)
@@ -281,6 +292,19 @@ class GameManager:
             except Exception as e_mess:
                 print(e_mess)
                 break
+
+    async def list_players(self, websocket, rid: str):
+        """Handle a player requesting a list of room members."""
+        room = self.rooms.get(int(rid), None)
+        # if room does not exist, room is None
+        players = []
+        if room is not None:
+            all_players = room.room_players.keys()
+            for player_id in all_players:
+                pid, socket = self.players[player_id]
+                await socket.send('Tell Nick')
+                players.append(await socket.recv())
+        await websocket.send("Players in room: " + ", ".join(players))
 
     async def main(self):
         """Main asyncio function to start server"""
