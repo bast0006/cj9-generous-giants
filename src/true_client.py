@@ -60,6 +60,8 @@ class Player:
         self.height = self.screen.get_height()
         self.texts = deque(self.texts, maxlen=(self.height - self.chat_h_start - 80)//20)
         self.make_screen()
+        self.map_width = 895 // 16
+        self.map_height = self.height // 16 - 1
 
     def make_screen(self):
         """Set up the initial ui."""
@@ -177,14 +179,13 @@ class Player:
             print("Starting game")
             self.in_game = True
 
-            width = 895//16
-            height = self.height // 16 - 1
-            mapGenerator = MapGen((width, height))
+            mapGenerator = MapGen((self.map_width, self.map_height))
             mapGenerator.generate_noise()
             self.seed = mapGenerator.seed
             mapGenerator.convert()
             map = MapSprite(x=5, y=5)
             map.register_from_string(mapGenerator.export_to_string())
+            self.map_sprite = map
             self.game.add_sprite(-3, map)
             self.comm_text = "Start Game"
             self.character = Character(
@@ -202,13 +203,12 @@ class Player:
         print("Starting game")
         self.in_game = True
 
-        width = 895 // 16
-        height = self.height // 16 - 1
-        mapGenerator = MapGen((width, height), seed=int(seed))
+        mapGenerator = MapGen((self.map_width, self.map_height), seed=int(seed))
         mapGenerator.generate_noise()
         mapGenerator.convert()
         map = MapSprite(x=5, y=5)
         map.register_from_string(mapGenerator.export_to_string())
+        self.map_sprite = map
         self.game.add_sprite(-3, map)
 
     async def create_players(self, websocket):
