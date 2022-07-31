@@ -201,7 +201,7 @@ class Player:
             self.game.add_sprite(-3, map)
             self.comm_text = "Start Game"
             self.character = Character(
-                spawn_position=(50 * self.pid, 50)
+                spawn_position=(50 * self.pid + 50, 50)
             )
             self.game.add_sprite(3, self.character)
             self.game.add_handler(self.character.input, pygame.KEYUP, pygame.KEYDOWN)
