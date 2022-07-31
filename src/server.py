@@ -77,6 +77,7 @@ class GameManager:
         self.rooms = {}         # (key-> room_id: int, value-> room: GameRoom)
         self.player_count = 0
         self.room_count = 0     # active room count
+        self.room_seeds = {}
 
     def create_room(self, pid: int):
         """Create room"""
@@ -285,7 +286,17 @@ class GameManager:
                         rid = await websocket.recv()
                         await websocket.send('Enter World Seed')
                         seed = await websocket.recv()
+                        self.room_seeds[int(rid)] = seed
+                        print("Starting game with room seed of", seed)
                         await self.broadcast_messages(int(rid), "Start Game")
+                        await self.broadcast_messages(int(rid), seed)
+                    case 'Change Seed':
+                        seed = await websocket.recv()
+                        await websocket.send('Enter Room ID')
+                        rid = await websocket.recv()
+                        self.room_seeds[int(rid)] = seed
+                        await self.broadcast_messages(int(rid), "Change Seed")
+                        print("Broadcasting seed change in room", rid, "to", seed)
                         await self.broadcast_messages(int(rid), seed)
                     case 'List Players':
                         await websocket.send('Enter Room ID')
