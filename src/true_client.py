@@ -1,4 +1,5 @@
 import asyncio
+import random
 from collections import deque
 
 import pygame
@@ -211,6 +212,14 @@ class Player:
         self.map_sprite = map
         self.game.add_sprite(-3, map)
 
+    def change_seed(self, seed: str):
+        """Replace the current map with a new one from a new seed."""
+        mapGenerator = MapGen((self.map_width, self.map_height), seed=int(seed))
+        mapGenerator.generate_noise()
+        mapGenerator.convert()
+        self.map_sprite.register_from_string(mapGenerator.export_to_string())
+        self.updated_rects.append(self.screen.get_rect())
+
     async def create_players(self, websocket):
         """Create player sprites for each player in the game."""
         await websocket.send("List PlayersRaw")
@@ -320,6 +329,12 @@ class Player:
             self.screen.blit(text, (self.text_edi_rect.x + 5, self.text_edi_rect.y + 2))
             self.updated_rects.append(self.screen.get_rect())
 
+        if self.in_game:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                new_seed = MapGen.generate_seed()
+                new_seed = int(new_seed*random.random())
+                self.game_data_pending.append(("Change Seed", new_seed))
+
     async def estab_comms(self):
         """Establish asynchronous communication with server, handle game loop"""
         print("Connecting to...", self.websocket_url)
@@ -343,6 +358,9 @@ class Player:
                                     pid, x, y = rest
                                     await websocket.send("MoveTo")
                                     await websocket.send(f"{pid},{x},{y}")
+                                elif key == "Change Seed":
+                                    await websocket.send("Change Seed")
+                                    await websocket.send(str(rest[0]))
 
                         if self.comm_text is None:
                             pass
@@ -370,12 +388,11 @@ class Player:
                                 case 'Enter Player ID':
                                     print("Replying with player ID:", self.pid)
                                     await websocket.send(str(self.pid))
-
                                 case 'Enter Room ID':
                                     print("Replying with room ID:", str(self.rid))
                                     await websocket.send(str(self.rid))
-
                                 case 'Enter World Seed':
+                                    print("Replying with world seed:", self.seed)
                                     await websocket.send(str(self.seed))
                                 case 'Start Game':
                                     seed = await websocket.recv()
@@ -383,12 +400,24 @@ class Player:
                                     await self.create_players(websocket)
                                 case 'Tell Nick':
                                     await websocket.send(self.name)
+                                case 'Change Seed':
+                                    seed = await websocket.recv()
+                                    print("Changing map seed to,", seed)
+                                    self.change_seed(seed)
                                 case _:
                                     if not received_message.startswith("MoveTo:"):
                                         self.texts += received_message.split("\n")
                                         break
                                     else:
                                         message = received_message.removeprefix("MoveTo: ")
+                                        if not self.character:
+                                            await websocket.send('Room Seed')
+                                            _ = await websocket.recv()
+                                            print(_)
+                                            await websocket.send(str(self.rid))
+                                            seed = await websocket.recv()
+                                            print("Got in progress room seed:", seed)
+                                            self.start_game_client(seed)
                                         pid, x, y = message.split(",")
                                         self.update_character(pid, int(x), int(y))
 
