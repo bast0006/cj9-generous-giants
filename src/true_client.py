@@ -260,6 +260,16 @@ class Player:
         if int(pid) == self.pid:
             return  # We already handle our own
 
+        if pid not in self.characters:
+            character = Character(
+                spawn_position=(int(pid)*50, 50),
+                max_x=self.screen.get_width(),
+                max_y=self.screen.get_height(),
+            )
+            print("New remote character:", pid)
+            self.game.add_sprite(2, character)
+            self.characters[pid] = character
+
         self.characters[pid].x = x
         self.characters[pid].y = y
 
