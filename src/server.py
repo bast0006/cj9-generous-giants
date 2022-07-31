@@ -154,7 +154,7 @@ class GameManager:
 
     async def leave_room(self, pid: int):
         """Leave room"""
-        rid = self.players.get(pid, None)
+        rid, _ws = self.players.get(pid, None)
         # if player is not assigned to any room, rid is None
 
         if rid is None:
