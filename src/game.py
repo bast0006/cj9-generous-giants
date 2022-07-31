@@ -121,6 +121,8 @@ class Game:
             pygame.display.update(changed_rects)
 
         pygame.quit()
+        for _, _, sprite in self.sprites:
+            sprite.running = False
 
 
 if __name__ == "__main__":
