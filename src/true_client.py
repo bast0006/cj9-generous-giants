@@ -48,6 +48,7 @@ class Player:
         self.game_data_pending = []
         self.characters = {}
         self.websocket_url = websocket_url
+        self.to_play = []
 
         # Init chat tracking
 
@@ -64,6 +65,8 @@ class Player:
         self.make_screen()
         self.map_width = 895 // 16
         self.map_height = self.height // 16 - 1
+
+        self.sounds = self.game.load_audio_folder("src/audio")
 
     def make_screen(self):
         """Set up the initial ui."""
@@ -296,6 +299,10 @@ class Player:
 
     def update(self, screen: pygame.Surface, dt: float) -> list[pygame.Rect]:
         """Called each frame by the Game."""
+        for sound in self.to_play:
+            self.sounds[sound].play()
+        self.to_play = []
+
         return self.frame_ui(screen)
 
     def on_event(self, event):
@@ -341,11 +348,28 @@ class Player:
             self.screen.blit(text, (self.text_edi_rect.x + 5, self.text_edi_rect.y + 2))
             self.updated_rects.append(self.screen.get_rect())
 
+        key_sound_map = dict(zip(
+            [
+                pygame.K_1,
+                pygame.K_2,
+                pygame.K_3,
+                pygame.K_4,
+                pygame.K_5,
+                pygame.K_6,
+                pygame.K_7,
+                pygame.K_8,
+            ],
+            self.sounds.keys(),
+        ))
+
         if self.in_game:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                new_seed = MapGen.generate_seed()
-                new_seed = int(new_seed*random.random())
-                self.game_data_pending.append(("Change Seed", new_seed))
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    new_seed = MapGen.generate_seed()
+                    new_seed = int(new_seed*random.random())
+                    self.game_data_pending.append(("Change Seed", new_seed))
+                elif event.key in key_sound_map:
+                    self.game_data_pending.append(("Play Sound", key_sound_map[event.key]))
 
     async def estab_comms(self):
         """Establish asynchronous communication with server, handle game loop"""
@@ -372,6 +396,9 @@ class Player:
                                     await websocket.send(f"{pid},{x},{y}")
                                 elif key == "Change Seed":
                                     await websocket.send("Change Seed")
+                                    await websocket.send(str(rest[0]))
+                                elif key == "Play Sound":
+                                    await websocket.send("Play Sound")
                                     await websocket.send(str(rest[0]))
 
                         if self.comm_text is None:
@@ -416,6 +443,10 @@ class Player:
                                     seed = await websocket.recv()
                                     print("Changing map seed to,", seed)
                                     self.change_seed(seed)
+                                case 'Play Sound':
+                                    sound = await websocket.recv()
+                                    print("Playing sound", sound)
+                                    self.to_play.append(sound)
                                 case _:
                                     if not received_message.startswith("MoveTo:"):
                                         self.texts += received_message.split("\n")

@@ -317,6 +317,12 @@ class GameManager:
                         rid = await websocket.recv()
                         print("Giving in-progress joiner the room seed:", self.room_seeds[int(rid)])
                         await websocket.send(self.room_seeds[int(rid)])
+                    case 'Play Sound':
+                        sound = await websocket.recv()
+                        await websocket.send('Enter Room ID')
+                        rid = int(await websocket.recv())
+                        await self.broadcast_messages(rid, 'Play Sound')
+                        await self.broadcast_messages(rid, sound)
                     case _:
                         if message.startswith("/"):
                             if message.startswith("/nick"):
