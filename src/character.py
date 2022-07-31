@@ -2,7 +2,7 @@ from random import randint
 
 import pygame
 
-from sprites import ImportantSprites
+from .sprites import ImportantSprites
 
 
 class Character(pygame.sprite.Sprite):

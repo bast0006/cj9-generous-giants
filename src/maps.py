@@ -6,8 +6,8 @@ import noise
 import numpy as np
 import pygame
 
-from character import Character
-from sprites import ImportantSprites
+from .character import Character
+from .sprites import ImportantSprites
 
 
 class MapGen:
