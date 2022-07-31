@@ -1,7 +1,4 @@
 import asyncio
-import threading
-import time
-import traceback
 from collections import deque
 
 import pygame
@@ -46,6 +43,8 @@ class Player:
         self.comm_text = None
         self.in_game = False
         self.character = None
+        self.game_data_pending = []
+        self.characters = {}
 
         # Init chat tracking
 
@@ -210,11 +209,40 @@ class Player:
         map = MapSprite(x=5, y=5)
         map.register_from_string(mapGenerator.export_to_string())
         self.game.add_sprite(-3, map)
-        self.character = Character(
-            spawn_position=(50, 50)
+
+    async def create_players(self, websocket):
+        """Create player sprites for each player in the game."""
+        await websocket.send("List PlayersRaw")
+        players = await websocket.recv()
+        players = players.split("|")
+        # Now we have player_id, nick pairings
+        players = [i.split(",") for i in players]
+
+        for pid, nick in players:
+            character = Character(
+                spawn_position=(int(pid)*50, 50)
+            )
+            self.game.add_sprite(2, character)
+            self.characters[pid] = character
+
+        character = Character(
+            spawn_position=(int(self.pid) * 50, 50)
         )
+        self.character = character
         self.game.add_sprite(3, self.character)
         self.game.add_handler(self.character.input, pygame.KEYUP, pygame.KEYDOWN)
+        self.character.special_input = self.send_char_data
+
+    def send_char_data(self, character: Character):
+        """Send update data through the websocket for movement."""
+        self.game_data_pending.append(("MoveTo", self.pid, character.x, character.y))
+
+    def update_character(self, pid: str, x: int, y: int):
+        """Update a character sprite."""
+        if pid == self.pid:
+            return  # We already handle our own
+        self.characters[pid].x = x
+        self.characters[pid].y = y
 
     def frame_ui(self, screen: pygame.Surface) -> list[pygame.Rect]:
         """Renders the ui that's updated each frame."""
@@ -298,11 +326,20 @@ class Player:
 
                     else:
                         special_commands = ["Join Room", "List Players"]
-                        if self.comm_text is None:
-                            continue
 
-                        if self.comm_text in options_dict.values() \
-                                or self.comm_text in special_commands:
+                        if self.game_data_pending:
+                            while self.game_data_pending:
+                                key, rest = self.game_data_pending.pop(0)
+                                if key == "MoveTo":
+                                    pid, x, y = rest
+                                    await websocket.send("MoveTo")
+                                    await websocket.send(f"{pid},{x},{y}")
+
+                        if self.comm_text is None:
+                            pass
+                        elif self.comm_text in options_dict.values() \
+                                or self.comm_text in special_commands \
+                                or self.comm_text.startswith("/"):
                             if self.comm_text == "Exit Game":
                                 self.running = False
                                 self.game.running = False
@@ -334,11 +371,17 @@ class Player:
                                 case 'Start Game':
                                     seed = await websocket.recv()
                                     self.start_game_client(seed)
+                                    await self.create_players(websocket)
                                 case 'Tell Nick':
                                     await websocket.send(self.name)
                                 case _:
-                                    self.texts += received_message.split("\n")
-                                    break
+                                    if not received_message.startswith("MoveTo:"):
+                                        self.texts += received_message.split("\n")
+                                        break
+                                    else:
+                                        message = received_message.removeprefix("MoveTo: ")
+                                        pid, x, y = message.split(",")
+                                        self.update_character(pid, int(x), int(y))
 
                 except Exception as _e:  # noqa: F841
                     # handle abrupt termination as well 'Leave game' option

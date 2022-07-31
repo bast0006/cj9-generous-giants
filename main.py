@@ -5,8 +5,8 @@ import traceback
 
 import pygame
 
-from src.true_client import Player
 from src.game import Game
+from src.true_client import Player
 
 
 async def main():

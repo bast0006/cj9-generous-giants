@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 
 import websockets
 
@@ -42,6 +43,7 @@ class GameRoom:
                 return f"You're in room {self.rid}"
 
             except Exception as e_mess:
+                print("Error joining:", e_mess)
                 return e_mess
         else:
             return "Player already exists"
@@ -119,6 +121,8 @@ class GameManager:
 
         else:
             room.add_player_to_room(pid)
+            _, ws = self.players[pid]
+            self.players[pid] = (rid, ws)
             message = f'Player {pid} joined room {rid}'
             await self.broadcast_messages(rid, message)
             print(f'Server message: Player {pid} added to room {rid}')
@@ -253,7 +257,12 @@ class GameManager:
                         rid = await websocket.recv()
                         await websocket.send('Enter Player ID')
                         pid = await websocket.recv()
-                        output = await self.join_room(int(rid), int(pid))
+                        try:
+                            rid = int(rid)
+                        except ValueError:
+                            await websocket.send(f"Bad room id: {rid}")
+                            continue
+                        output = await self.join_room(rid, int(pid))
                         await websocket.send(output)
 
                     case 'Leave Room':
@@ -281,7 +290,25 @@ class GameManager:
                         await websocket.send('Enter Room ID')
                         rid = await websocket.recv()
                         await self.list_players(websocket, rid)
+                    case 'List PlayersRaw':
+                        await websocket.send('Enter Room ID')
+                        rid = await websocket.recv()
+                        await self.list_players(websocket, rid)
+                    case 'MoveTo':
+                        target = await websocket.recv()
+                        await websocket.send('Enter Player ID')
+                        pid = await websocket.recv()
+                        await self.send_messages_in_chat(pid, message + ": " + target)
                     case _:
+                        if message.startswith("/"):
+                            if message.startswith("/nick"):
+                                new_nick = message.removeprefix("/nick")
+                                await websocket.send('Enter Player ID')
+                                pid = int(await websocket.recv())
+                                rid, _ws = self.players[pid]
+                                print("New nick ", self.rooms[rid].room_players[pid], "to", new_nick)
+                                self.rooms[rid].room_players[pid] = new_nick
+                                continue
                         info, remainder_message = message.split(":", maxsplit=1)
                         pid = int(info.split("###")[-1])
 
@@ -289,8 +316,8 @@ class GameManager:
                         if output:
                             await websocket.send(output)
 
-            except Exception as e_mess:
-                print(e_mess)
+            except Exception as _e_mess:  # noqa: F841
+                print(traceback.format_exc())
                 break
 
     async def list_players(self, websocket, rid: str):
@@ -299,12 +326,20 @@ class GameManager:
         # if room does not exist, room is None
         players = []
         if room is not None:
+            players = room.room_players.values()
+        await websocket.send("Players in room: " + ", ".join(players))
+
+    async def list_players_raw(self, websocket, rid: str):
+        """Handle a player requesting a list of room members."""
+        room = self.rooms.get(int(rid), None)
+        # if room does not exist, room is None
+        players = []
+        if room is not None:
             all_players = room.room_players.keys()
             for player_id in all_players:
                 pid, socket = self.players[player_id]
-                await socket.send('Tell Nick')
-                players.append(await socket.recv())
-        await websocket.send("Players in room: " + ", ".join(players))
+                players.append((pid, room.room_players[player_id]))
+        await websocket.send("|".join(f"{p[0]},{p[1]}" for p in players))
 
     async def main(self):
         """Main asyncio function to start server"""
