@@ -81,27 +81,32 @@ class GameManager:
         rid = self.room_count
         room = GameRoom(rid, self.max_room_size)
 
-        existing_rid = self.players.get(pid, None)
+        existing_rid, ws = self.players.get(pid, (-1, None))
         # if player is not assigned to any room, existing_rid is None
 
         if existing_rid is None:
             room.add_player_to_room(pid)
-            self.players[pid] = rid
+            _, ws = self.players[pid]
+            self.players[pid] = (rid, ws)
             self.rooms[rid] = room
             print(f'Server message: Room {rid} created')
             self.room_count += 1
-            return f"Room {rid} created"
+            return f"Welcome to room {rid}"
 
         else:
             print(f'Server message: Player {pid} already in room {existing_rid}')
             return f"Already in room {existing_rid}. Please leave room before creating new room"
 
-    def join_room(self, rid: int, pid: int):
+    async def join_room(self, rid: int, pid: int):
         """Join room"""
-        existing_rid = self.players.get(pid, None)
+        existing_rid, _ = self.players.get(pid, (-1, None))
         # if player is not assigned to any room, existing_rid is None
 
-        if existing_rid is not None:
+        if existing_rid == -1:
+            print(f'Server message: Player {pid} not found')
+            return f"Player {pid} not found"
+
+        elif existing_rid is not None:
             print(f'Server message: Player {pid} already in room {existing_rid}')
             return f"Player {pid} already in room {rid}"
 
@@ -111,12 +116,45 @@ class GameManager:
         if room is None:
             print(f'Server message: Room {rid} not found')
             return f'Room {rid} does not exist'
+
         else:
             room.add_player_to_room(pid)
+            message = f'Player {pid} joined room {rid}'
+            await self.broadcast_messages(rid, message)
             print(f'Server message: Player {pid} added to room {rid}')
             return f'Player {pid} added to room {rid}'
 
-    def leave_room(self, pid: int):
+    async def send_messages_in_chat(self, pid, message: str):
+        rid, _ = self.players.get(pid, [-1, None])
+
+        if rid == -1:
+            print(f'Server message: Player {pid} not found')
+            # return f"Player {pid} not found"
+
+        elif rid is None:
+            print(f'Server message: Player {pid} not in room')
+            # return f"Player {pid} not in room"
+
+        else:
+            await self.broadcast_messages(rid, message)
+
+    async def broadcast_messages(self, rid: int, message: str):
+        """Broadcast messages to all players in room"""
+
+        room = self.rooms.get(rid, None)
+        # if room does not exist, room is None
+
+        if room is not None:
+            all_players = room.room_players.keys()
+            for player_id in all_players:
+                _, comm_socket = self.players[player_id]
+                await comm_socket.send(message)
+
+        else:
+            print(f'Server message: Room {rid} not found')
+            return f'Room {rid} not found'
+
+    async def leave_room(self, pid: int):
         """Leave room"""
         rid = self.players.get(pid, None)
         # if player is not assigned to any room, rid is None
@@ -128,7 +166,11 @@ class GameManager:
         else:
             room = self.rooms[rid]
             room.remove_player_from_room(pid)
-            self.players[pid] = None       # reset (key: player_id, value: room_id) mapping
+            message = f'Player {pid} left room {rid}'
+            # self.send_messages_in_chat(pid, message)
+            await self.broadcast_messages(rid, message)
+            _, ws = self.players[pid]
+            self.players[pid] = (None, ws)       # reset (key: player_id, value: room_id) mapping
 
             if room.room_size == 0:
                 # delete room if empty
@@ -139,21 +181,21 @@ class GameManager:
             print(f'Server message: Player {pid} out of room {rid}')
             return f'Player {pid} out of room {rid}'
 
-    def add_player(self):
+    def add_player(self, websocket: websockets.WebSocketServerProtocol):
         """Add player to game. Assign a new player id"""
-        self.players[self.player_count] = None
+        self.players[self.player_count] = (None, websocket)
         # current None assigned to player_id in dictionary indicating no room assigned
 
         self.player_count += 1
         print(f'Server message: Player {self.player_count} added')
         return f"PID###{self.player_count - 1}"
 
-    def remove_player(self, player_id: int):
+    async def remove_player(self, player_id: int):
         """Remove player from game"""
-        response = self.leave_room(player_id)   # response for debugging
+        response = await self.leave_room(player_id)   # response for debugging
         print(response)
-        rid = self.players.get(player_id, "")
-        # if player doesn't exist, rid will be ""
+        rid, _ = self.players.get(player_id, (-1, None))
+        # if player doesn't exist, rid will be -1
         # rid is None if player exists without any room
 
         if rid is None:
@@ -180,7 +222,7 @@ class GameManager:
                               + f"{self.rooms[rid].max_room_size - self.rooms[rid].room_size}"
                               for rid in self.rooms.keys()]
 
-            return "<\n" + " >\n<".join(room_info_list) + " >\n"
+            return "<" + " >\n<".join(room_info_list) + " >"
 
     async def start_game(self, websocket):
         """Receive websocket connection from player. Player creation and game start"""
@@ -190,10 +232,9 @@ class GameManager:
                 print(f'Received: {message}')
 
                 match message:
-
                     case 'Get ID':
                         # assign new player id
-                        output = self.add_player()
+                        output = self.add_player(websocket)
                         await websocket.send(output)
 
                     case 'See rooms':
@@ -211,24 +252,26 @@ class GameManager:
                         rid = await websocket.recv()
                         await websocket.send('Enter Player ID')
                         pid = await websocket.recv()
-                        output = self.join_room(int(rid), int(pid))
+                        output = await self.join_room(int(rid), int(pid))
                         await websocket.send(output)
 
                     case 'Leave Room':
                         await websocket.send('Enter Player ID')
                         pid = await websocket.recv()
-                        output = self.leave_room(int(pid))
+                        output = await self.leave_room(int(pid))
                         await websocket.send(output)
 
                     case 'Leave game':
                         await websocket.send('Enter Player ID')
                         pid = await websocket.recv()
-                        output = self.remove_player(int(pid))
+                        output = await self.remove_player(int(pid))
                         await websocket.send(output)
                         raise Exception(f'Game over for player {pid}')
 
                     case _:
-                        print(f"I copy you -> {message}")
+                        info, remainder_message = message.split(":")
+                        pid = int(info.split("###")[-1])
+                        await self.send_messages_in_chat(pid, remainder_message)
 
             except Exception as e_mess:
                 print(e_mess)
