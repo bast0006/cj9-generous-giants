@@ -103,6 +103,10 @@ class MapGen:
         with open(filename, "w") as f:
             f.write(str(self).replace("0", "F").replace("1", "W").replace("2", "G"))
 
+    def export_to_string(self) -> str:
+        """Export the map as a single-line string."""
+        return str(self).replace("0", "F").replace("1", "W").replace("2", "G").replace("\n", "|")
+
     def _make_map(self):
         """Make a new map."""
         self.generate_noise()
@@ -131,7 +135,8 @@ class MapSprite:
     """
 
     def __init__(self, mapFileDir):
-        self.register_new_map(mapFileDir)
+        if mapFileDir:
+            self.register_new_map(mapFileDir)
 
     def update(self, screen: pygame.Surface, _):
         """Draw the map out on the screen"""
@@ -180,6 +185,10 @@ class MapSprite:
         """Change the map being used."""
         with open(mapFileDir, "r") as f:
             self._map = list(list(i) for i in (f.read().split("\n")))
+
+    def register_from_string(self, map_data: str):
+        """Change the map being used to one provided as string data."""
+        self._map = list(list(i) for i in (map_data.split("|")))
 
 
 if __name__ == "__main__":
