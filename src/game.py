@@ -78,7 +78,7 @@ class Game:
         """Remove a sprite from the game."""
         self.sprites.remove((layer, hash(sprite), sprite))
 
-    def load_audio_folder(self, folder: Union[str, FileIO]) -> list[pygame.mixer.Sound]:
+    def load_audio_folder(self, folder: Union[str, FileIO]) -> dict[str, pygame.mixer.Sound]:
         """
         Loads all audio file in dir to mixer Sound object
 
