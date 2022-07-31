@@ -13,7 +13,8 @@ class SpriteSheet:
 
         rectangle: (x, y, x + offset, y + offset)
         """
-        rect = pygame.Rect(rectangle)
+        x, y, x1, y1 = rectangle
+        rect = pygame.Rect(x, y, x1-x, y1-y)
         image = pygame.Surface(rect.size).convert_alpha()
         image.blit(self.sheet, (0, 0), rect)
         return image

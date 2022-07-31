@@ -1,11 +1,12 @@
 from datetime import datetime
 from enum import Enum
-from typing import Tuple
+from typing import Optional, Tuple
 
 import noise
 import numpy as np
 import pygame
 
+from character import Character
 from sprites import ImportantSprites
 
 
@@ -44,7 +45,7 @@ class MapGen:
 
     def __str__(self) -> str:
         return "\n".join(
-            ("".join("{:.0f}".format(j) for j in i) for i in mapGenerator.world)
+            ("".join("{:.0f}".format(j) for j in i) for i in self.world)
         )
 
     def generate_noise(self):
@@ -102,6 +103,10 @@ class MapGen:
         with open(filename, "w") as f:
             f.write(str(self).replace("0", "F").replace("1", "W").replace("2", "G"))
 
+    def export_to_string(self) -> str:
+        """Export the map as a single-line string."""
+        return str(self).replace("0", "F").replace("1", "W").replace("2", "G").replace("\n", "|")
+
     def _make_map(self):
         """Make a new map."""
         self.generate_noise()
@@ -129,8 +134,12 @@ class MapSprite:
     It can be drawn to the screen.
     """
 
-    def __init__(self, mapFileDir):
-        self.register_new_map(mapFileDir)
+    def __init__(self, mapFileDir: Optional[str] = None, x: int = 0, y: int = 0):
+        if mapFileDir:
+            self.register_new_map(mapFileDir)
+
+        self.x = x
+        self.y = y
 
     def update(self, screen: pygame.Surface, _):
         """Draw the map out on the screen"""
@@ -144,15 +153,15 @@ class MapSprite:
             MapLegend.FLOWER: sprites.get_flowers(),
         }
 
-        for indexY, row in enumerate(self._map):
-            for indexX, colum in enumerate(row):
+        for indexX, row in enumerate(self._map):
+            for indexY, column in enumerate(row):
                 screen.blit(
-                    map_sprites[MapLegend(colum)],
-                    (16 * indexY, 16 * indexX, 16, 16),
+                    map_sprites[MapLegend(column)],
+                    (16 * indexX + self.x, 16 * indexY + self.y, 16, 16),
                 )
                 rects.append(
                     pygame.Rect(
-                        (16 * indexY, 16 * indexX, 16, 16),
+                        (16 * indexX + self.x, 16 * indexY + self.y, 16, 16),
                     )
                 )
         return rects
@@ -179,6 +188,10 @@ class MapSprite:
         """Change the map being used."""
         with open(mapFileDir, "r") as f:
             self._map = list(list(i) for i in (f.read().split("\n")))
+
+    def register_from_string(self, map_data: str):
+        """Change the map being used to one provided as string data."""
+        self._map = list(list(i) for i in (map_data.split("|")))
 
 
 if __name__ == "__main__":
@@ -229,6 +242,12 @@ if __name__ == "__main__":
         new_map,
         pygame.KEYDOWN,
     )
+
+    player1 = Character(spawn_position=(50, 50))
+
+    game.add_sprite(1, player1)
+    game.add_handler(player1.input, pygame.KEYDOWN, pygame.KEYUP)
+
     game.start()
 
     remove(exportDir)

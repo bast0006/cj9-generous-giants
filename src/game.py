@@ -51,8 +51,10 @@ class Game:
 
         for mode in nice_modes:
             if mode[0] < 0.7*native_mode[0]:
-                print("Selected display mode:", mode)
-                return mode
+                if mode[0] >= 1200 and mode[1] >= 800:
+                    print("Selected display mode:", mode)
+                    return mode
+        return 1200, 800
 
     def add_handler(self, func: callable, *event_types) -> None:
         """Register an event handler, which will be called on all events of a matching type."""
@@ -119,6 +121,8 @@ class Game:
             pygame.display.update(changed_rects)
 
         pygame.quit()
+        for _, _, sprite in self.sprites:
+            sprite.running = False
 
 
 if __name__ == "__main__":
@@ -146,6 +150,12 @@ if __name__ == "__main__":
 
     sprite = TestSprite()
     game.add_sprite(1, sprite)
+
+    from character import Character
+    char = Character()
+    game.add_sprite(0, char)
+    game.add_handler(char.input, pygame.KEYDOWN, pygame.KEYUP)
+
     game.add_handler(print, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN)
 
     game.start()
