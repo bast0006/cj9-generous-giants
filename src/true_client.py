@@ -12,7 +12,7 @@ from .maps import MapGen, MapSprite
 
 black = (0, 0, 0)
 white = (255, 255, 255)
-grey = (155, 155, 155)
+grey = (200, 200, 200)
 
 options_dict = {
     1: "See rooms",
@@ -49,6 +49,7 @@ class Player:
         self.characters = {}
         self.websocket_url = websocket_url
         self.to_play = []
+        self.counter = 0
 
         # Init chat tracking
 
@@ -100,11 +101,16 @@ class Player:
     def menu_panel(self):
         """Draw the menu panel."""
         menu_w_start = 1050
-        for i, j in zip(range(20, 260, 35), options_dict.values()):
-            text = self.font.render(j, True, black)
-            rect = pygame.draw.rect(self.screen, black, rect=pygame.Rect((menu_w_start, i, 110, 30)), width=1)
-            self.screen.blit(text, (menu_w_start + 10, i + 5))
-            self.menu_rects.append((rect, j))
+        for start_height, text in zip(range(20, 260, 35), options_dict.values()):
+            rendered_text = self.font.render(text, True, black)
+            rect = pygame.draw.rect(
+                self.screen,
+                (66, 155, 245),
+                rect=pygame.Rect((menu_w_start, start_height, 110, 30)),
+                width=1,
+            )
+            self.screen.blit(rendered_text, (menu_w_start + 10, start_height + 5))
+            self.menu_rects.append((rect, text))
 
     def chat_panel(self):
         """Draw the chat panel and messages."""
@@ -131,7 +137,7 @@ class Player:
         self.screen.blit(text, (self.chat_w_start+5, self.chat_h_start-20))
 
         self.text_edi_rect = pygame.Rect(self.chat_w_start+1, self.chat_h_start+1, 289, 30)
-        pygame.draw.rect(self.screen, black, self.text_edi_rect, width=1)
+        pygame.draw.rect(self.screen, (66, 155, 245), self.text_edi_rect, width=1)
 
         for i in range(self.chat_h_start + 40, self.height - 40, 20):
             self.chat_bars.append(pygame.Rect((self.chat_w_start+5, i, self.width-(self.chat_w_start+18), 20)))
@@ -155,7 +161,8 @@ class Player:
                 shift_on = False
                 continue
             elif i == "back":
-                temp_buffer.pop()
+                if temp_buffer:
+                    temp_buffer.pop()
                 continue
 
             counter += len(i)
@@ -303,6 +310,8 @@ class Player:
             self.sounds[sound].play()
         self.to_play = []
 
+        self.counter += dt * 2
+
         return self.frame_ui(screen)
 
     def on_event(self, event):
@@ -343,8 +352,8 @@ class Player:
                 pygame.draw.rect(self.screen, grey, rect=self.text_edi_rect)
             else:
                 pygame.draw.rect(self.screen, white, rect=self.text_edi_rect)
-            pygame.draw.rect(self.screen, black, self.text_edi_rect, width=1)
-            text = self.font.render(self.print_buffer()[-40:], True, black)
+            pygame.draw.rect(self.screen, (66, 155, 245), self.text_edi_rect, width=1)
+            text = self.font.render(self.print_buffer()[-40:] + ("|" if int(self.counter) % 2 else ""), True, black)
             self.screen.blit(text, (self.text_edi_rect.x + 5, self.text_edi_rect.y + 2))
             self.updated_rects.append(self.screen.get_rect())
 
