@@ -26,6 +26,8 @@ class Character(pygame.sprite.Sprite):
         y: int = 0,
         dx: float = 0,
         dy: float = 0,
+        max_x: int = 1200,
+        max_y: int = 800,
         strength: int = None,
         vitality: int = None,
         intel: int = None,
@@ -48,6 +50,8 @@ class Character(pygame.sprite.Sprite):
         self.__intel = self.roll_stat(intel)
         self.__dexterity = self.roll_stat(dexterity)
         self.__items = items
+        self.max_x = max_x
+        self.max_y = max_y
         self.update_derived_stats()
         self._regen = True  # Health and mana regeneration are on by default
         self.regen_speed = regen
@@ -131,7 +135,7 @@ class Character(pygame.sprite.Sprite):
     @property
     def x(self) -> int:
         """Returns x coordinate as integer"""
-        return int(self.__x)
+        return int(self.__x) % self.max_x
 
     @x.setter
     def x(self, value: int) -> None:
@@ -141,7 +145,7 @@ class Character(pygame.sprite.Sprite):
     @property
     def y(self) -> int:
         """Returns y coordinate as integer"""
-        return int(self.__y)
+        return int(self.__y) % self.max_y
 
     @y.setter
     def y(self, value: int) -> None:
