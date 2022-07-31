@@ -300,7 +300,7 @@ class Player:
                 self.shift_active = True
                 pygame.draw.rect(self.screen, grey, rect=self.text_edi_rect)
 
-        if self.shift_active and not self.in_game:
+        if self.shift_active:
             if event.type == pygame.KEYUP:
                 if event.key in [pygame.K_LSHIFT, pygame.K_RSHIFT]:
                     self.text_buffer.append(pygame.key.name(event.key) + "end")
