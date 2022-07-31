@@ -266,7 +266,9 @@ class GameManager:
                             continue
                         output = await self.join_room(rid, int(pid))
                         await websocket.send(output)
-
+                        if rid in self.room_seeds:
+                            await websocket.send("Start Game")
+                            await websocket.send(self.room_seeds[rid])
                     case 'Leave Room':
                         await websocket.send('Enter Player ID')
                         pid = await websocket.recv()
