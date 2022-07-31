@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import threading
 import time
 import traceback
@@ -18,7 +19,13 @@ if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     ws_thread = threading.Thread(target=loop.run_forever)
     game = Game()
-    player = Player()
+
+    if len(sys.argv) > 1:
+        websocket_url = sys.argv[1]
+    else:
+        websocket_url = 'ws://localhost:8001'  # Default to localhost
+
+    player = Player(websocket_url)
 
     try:
         ws_thread.start()

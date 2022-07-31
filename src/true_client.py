@@ -17,7 +17,7 @@ options_dict = {
     2: "Create Room",
     3: "Help",
     4: "Leave Room",
-    5: "Leave game",
+    5: "Leave Game",
     6: "Exit Game",
 }
 
@@ -25,7 +25,7 @@ options_dict = {
 class Player:
     """Handle asynchronous player creation, input and communication with server"""
 
-    def __init__(self):
+    def __init__(self, websocket_url: str = 'ws://localhost:8001'):
         self.game = None
         self.name = "Missing"
         # self.websocket = websocket
@@ -45,6 +45,7 @@ class Player:
         self.character = None
         self.game_data_pending = []
         self.characters = {}
+        self.websocket_url = websocket_url
 
         # Init chat tracking
 
@@ -314,7 +315,8 @@ class Player:
 
     async def estab_comms(self):
         """Establish asynchronous communication with server, handle game loop"""
-        async with websockets.connect(uri='ws://localhost:8001') as websocket:
+        print("Connecting to...", self.websocket_url)
+        async with websockets.connect(uri=self.websocket_url) as websocket:
             while self.running:
                 try:
                     if self.pid is None:
