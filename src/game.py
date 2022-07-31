@@ -1,5 +1,8 @@
 import bisect
 from collections import defaultdict
+from io import FileIO
+from pathlib import Path
+from typing import Union
 
 import pygame
 
@@ -71,6 +74,20 @@ class Game:
     def remove_sprite(self, layer: int, sprite: object):
         """Remove a sprite from the game."""
         self.sprites.remove((layer, hash(sprite), sprite))
+
+    def load_audio_folder(self, folder: Union[str, FileIO]):
+        """
+        Loads all audio file in dir to mixer Sound object
+
+        Loads all the audio and returns back a dict with key as file name
+        and value as mixer.Sound object.
+        """
+        sound_list = {}
+        for audio_file in Path(folder).iterdir():
+            if str(audio_file).endswith(".wav"):
+                sound_list[audio_file.name] = pygame.mixer.Sound(audio_file)
+
+        return sound_list
 
     def quit_on_esc(self, event: pygame.event.EventType):
         """Exit if the event is an escape keypress."""
