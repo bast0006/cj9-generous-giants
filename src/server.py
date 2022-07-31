@@ -324,8 +324,14 @@ class GameManager:
                                 rid, _ws = self.players[pid]
                                 print("New nick ", self.rooms[rid].room_players[pid], "to", new_nick)
                                 self.rooms[rid].room_players[pid] = new_nick
-                                continue
-                        info, remainder_message = message.split(":", maxsplit=1)
+                            continue
+                        try:
+                            info, remainder_message = message.split(":", maxsplit=1)
+                        except ValueError:
+                            print("Protocol communication exception, honeybadgering")
+                            print("Message was:", message)
+                            traceback.print_exc()
+                            continue
                         pid = int(info.split("###")[-1])
 
                         output = await self.send_messages_in_chat(pid, remainder_message)
