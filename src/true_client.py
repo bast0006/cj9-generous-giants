@@ -223,13 +223,18 @@ class Player:
 
         for pid, nick in players:
             character = Character(
-                spawn_position=(int(pid)*50, 50)
+                spawn_position=(int(pid)*50, 50),
+                max_x=self.screen.get_width(),
+                max_y=self.screen.get_height(),
             )
+            print("New remote character:", pid, nick)
             self.game.add_sprite(2, character)
             self.characters[pid] = character
 
         character = Character(
-            spawn_position=(int(self.pid) * 50, 50)
+            spawn_position=(int(self.pid) * 50, 50),
+            max_x=self.screen.get_width(),
+            max_y=self.screen.get_height(),
         )
         self.character = character
         self.game.add_sprite(3, self.character)
