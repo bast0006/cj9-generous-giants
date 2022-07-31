@@ -45,7 +45,7 @@ class MapGen:
 
     def __str__(self) -> str:
         return "\n".join(
-            ("".join("{:.0f}".format(j) for j in i) for i in mapGenerator.world)
+            ("".join("{:.0f}".format(j) for j in i) for i in self.world)
         )
 
     def generate_noise(self):
