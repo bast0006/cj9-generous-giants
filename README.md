@@ -24,3 +24,9 @@ Characters "glitch" when leaving "Safe" areas on the map
 
 
 Sprites thanks to https://kenney.nl/, under the CC0 license.
+
+## Screenshots!
+
+![Where you start](/screenshots/rooms.png "The starting interface")
+![Playing together](/screenshots/say-hi.png "A map, and a friend")
+1[Around the UI we go](/screenshots/bugs.png)
