@@ -162,7 +162,7 @@ class GameManager:
 
     async def leave_room(self, pid: int):
         """Leave room"""
-        rid, _ws = self.players.get(pid, None)
+        rid, _ws = self.players.get(pid, [None, None])
         # if player is not assigned to any room, rid is None
 
         if rid is None:
@@ -232,6 +232,7 @@ class GameManager:
 
     async def start_game(self, websocket):
         """Receive websocket connection from player. Player creation and game start"""
+        pid = None
         while True:
             try:
                 message = await websocket.recv()    # first message will be 'Get ID'
@@ -242,6 +243,7 @@ class GameManager:
                     case 'Get ID':
                         # assign new player id
                         output = self.add_player(websocket)
+                        pid = int(output.split("###")[-1])
                         await websocket.send(output)
 
                     case 'See rooms':
@@ -275,7 +277,7 @@ class GameManager:
                         output = await self.leave_room(int(pid))
                         await websocket.send(output)
 
-                    case 'Leave game':
+                    case 'Leave Game':
                         await websocket.send('Enter Player ID')
                         pid = await websocket.recv()
                         output = await self.remove_player(int(pid))
@@ -347,6 +349,11 @@ class GameManager:
                         output = await self.send_messages_in_chat(pid, remainder_message)
                         if output:
                             await websocket.send(output)
+            except websockets.ConnectionClosed:
+                if pid is not None:
+                    output = await self.remove_player(int(pid))
+                    # await websocket.send(output)
+                break
 
             except Exception as _e_mess:  # noqa: F841
                 print(traceback.format_exc())
