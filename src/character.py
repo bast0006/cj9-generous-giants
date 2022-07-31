@@ -30,7 +30,7 @@ class Character(pygame.sprite.Sprite):
         vitality: int = None,
         intel: int = None,
         dexterity: int = None,
-        movement_speed: int = 5,
+        movement_speed: int = 50,  # pixels per second
         regen: int = 1.5,
         items: list = []
     ) -> None:
@@ -59,7 +59,7 @@ class Character(pygame.sprite.Sprite):
         self.character_index = character_index
         self.movement_speed = movement_speed
 
-    def input(self, event_type, event) -> None:
+    def input(self, event) -> None:
         """
         Input handler
 
@@ -88,7 +88,12 @@ class Character(pygame.sprite.Sprite):
         """
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
-        self.rect.center += self.direction * speed * dt
+
+        # += behaves badly with properties and breaks the float property
+        self.x = self.__x + self.direction.x * speed * dt
+        self.y = self.__y + self.direction.y * speed * dt
+        self.rect.center = (self.x, self.y)
+        print(self.rect)
 
     def update(self, screen: pygame.Surface, dt: float) -> None:
         """
