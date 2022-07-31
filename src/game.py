@@ -129,6 +129,12 @@ if __name__ == "__main__":
 
     sprite = TestSprite()
     game.add_sprite(1, sprite)
+
+    from character import Character
+    char = Character()
+    game.add_sprite(0, char)
+    game.add_handler(char.input, pygame.KEYDOWN, pygame.KEYUP)
+
     game.add_handler(print, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN)
 
     game.start()
