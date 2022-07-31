@@ -214,6 +214,8 @@ class Player:
     async def create_players(self, websocket):
         """Create player sprites for each player in the game."""
         await websocket.send("List PlayersRaw")
+        assert await websocket.recv() == 'Enter Room ID'
+        await websocket.send(str(self.rid))
         players = await websocket.recv()
         players = players.split("|")
         # Now we have player_id, nick pairings
