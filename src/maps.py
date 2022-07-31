@@ -6,6 +6,7 @@ import noise
 import numpy as np
 import pygame
 
+from character import Character
 from sprites import ImportantSprites
 
 
@@ -229,6 +230,11 @@ if __name__ == "__main__":
         new_map,
         pygame.KEYDOWN,
     )
+
+    player1 = Character(spawn_position=(50, 50), movement_speed=3)
+
+    game.add_sprite(1, player1)
+
     game.start()
 
     remove(exportDir)
