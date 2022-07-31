@@ -64,6 +64,7 @@ class Character(pygame.sprite.Sprite):
         self.character_index = character_index
         self.movement_speed = movement_speed
         self.x, self.y = spawn_position
+        self.special_input = lambda x: None
 
     def input(self, event) -> None:
         """
@@ -94,12 +95,15 @@ class Character(pygame.sprite.Sprite):
         """
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
-
+        self.last_x = self.x
+        self.last_y = self.y
         # += behaves badly with properties and breaks the float property
         self.x = self.__x + self.direction.x * speed * dt
         self.y = self.__y + self.direction.y * speed * dt
         self.rect.center = (self.x, self.y)
-        print(self.rect)
+        # Update position on other clients!
+        if self.x != self.last_x or self.y != self.last_y:
+            self.special_input(self)
 
     def update(self, screen: pygame.Surface, dt: float) -> None:
         """
