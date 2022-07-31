@@ -59,29 +59,28 @@ class Character(pygame.sprite.Sprite):
         self.character_index = character_index
         self.movement_speed = movement_speed
 
-    def input(self) -> None:
+    def input(self, event_type, event) -> None:
         """
         Input handler
 
         handles the key event
         """
-        keys = pygame.key.get_pressed()
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_w or event.key == pygame.K_s:
+                self.direction.y = 0
+            elif event.key == pygame.K_a or event.key == pygame.K_d:
+                self.direction.x = 0
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_w:
+                self.direction.y = -1
+            elif event.key == pygame.K_s:
+                self.direction.y = 1
+            elif event.key == pygame.K_a:
+                self.direction.x = -1
+            elif event.key == pygame.K_d:
+                self.direction.x = 1
 
-        if keys[pygame.K_w]:
-            self.direction.y = -1
-        elif keys[pygame.K_s]:
-            self.direction.y = 1
-        else:
-            self.direction.y = 0
-
-        if keys[pygame.K_a]:
-            self.direction.x = -1
-        elif keys[pygame.K_d]:
-            self.direction.x = 1
-        else:
-            self.direction.x = 0
-
-    def move(self, speed: int):
+    def move(self, speed: int, dt: float):
         """
         Manages the move
 
@@ -89,9 +88,9 @@ class Character(pygame.sprite.Sprite):
         """
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
-        self.rect.center += self.direction * speed
+        self.rect.center += self.direction * speed * dt
 
-    def update(self, screen: pygame.Surface, _) -> None:
+    def update(self, screen: pygame.Surface, dt: float) -> None:
         """
         Update character stats and position.
 
@@ -100,8 +99,7 @@ class Character(pygame.sprite.Sprite):
         """
         self.regen(self.regen_speed)
 
-        self.input()
-        self.move(self.movement_speed)
+        self.move(self.movement_speed, dt)
         screen.blit(self.image, self.rect, (self.character_index * 1,
                                             self.character_index * 1,
                                             16, 16))
