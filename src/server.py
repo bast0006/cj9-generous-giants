@@ -324,6 +324,8 @@ class GameManager:
                                 await websocket.send('Enter Player ID')
                                 pid = int(await websocket.recv())
                                 rid, _ws = self.players[pid]
+                                if not rid:
+                                    continue
                                 print("New nick ", self.rooms[rid].room_players[pid], "to", new_nick)
                                 self.rooms[rid].room_players[pid] = new_nick
                             continue
