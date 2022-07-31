@@ -54,6 +54,7 @@ class Character(pygame.sprite.Sprite):
 
         self.sprites = ImportantSprites()
         self.image = self.sprites.get_character1()
+        self.image.set_colorkey((34, 35, 35))
         self.rect = self.image.get_rect(topleft=spawn_position)
         self.direction = pygame.math.Vector2()
         self.character_index = character_index
