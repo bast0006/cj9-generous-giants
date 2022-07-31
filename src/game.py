@@ -22,6 +22,7 @@ class Game:
             pygame.init()
 
         self.screen = pygame.display.set_mode(self.get_nice_display_mode())
+        pygame.display.set_caption(" ")
 
         self.event_handlers = defaultdict(list)
         self.sprites = []
