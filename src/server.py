@@ -294,12 +294,16 @@ class GameManager:
                     case 'List PlayersRaw':
                         await websocket.send('Enter Room ID')
                         rid = await websocket.recv()
-                        await self.list_players(websocket, rid)
+                        await self.list_players_raw(websocket, rid)
                     case 'MoveTo':
                         target = await websocket.recv()
-                        await websocket.send('Enter Player ID')
-                        pid = await websocket.recv()
-                        await self.send_messages_in_chat(pid, message + ": " + target)
+                        pid = target.split(",", maxsplit=1)[0]
+                        await self.send_messages_in_chat(int(pid), message + ": " + target)
+                    case 'Room Seed':
+                        await websocket.send('Enter Room ID')
+                        rid = await websocket.recv()
+                        print("Giving in-progress joiner the room seed:", self.room_seeds[int(rid)])
+                        await websocket.send(self.room_seeds[int(rid)])
                     case _:
                         if message.startswith("/"):
                             if message.startswith("/nick"):
@@ -338,8 +342,7 @@ class GameManager:
         if room is not None:
             all_players = room.room_players.keys()
             for player_id in all_players:
-                pid, socket = self.players[player_id]
-                players.append((pid, room.room_players[player_id]))
+                players.append((player_id, room.room_players[player_id]))
         await websocket.send("|".join(f"{p[0]},{p[1]}" for p in players))
 
     async def main(self):
