@@ -1,5 +1,6 @@
 import asyncio
 import random
+import traceback
 from collections import deque
 
 import pygame
@@ -350,11 +351,11 @@ class Player:
                         self.pid = pid
 
                     else:
-                        special_commands = ["Join Room", "List Players"]
+                        special_commands = ["Join Room", "List Players", "Start Game"]
 
                         if self.game_data_pending:
                             while self.game_data_pending:
-                                key, rest = self.game_data_pending.pop(0)
+                                key, *rest = self.game_data_pending.pop(0)
                                 if key == "MoveTo":
                                     pid, x, y = rest
                                     await websocket.send("MoveTo")
@@ -424,7 +425,9 @@ class Player:
 
                 except Exception as _e:  # noqa: F841
                     # handle abrupt termination as well 'Leave game' option
-
+                    traceback.print_exc()
+                    self.running = False
+                    self.game.running = False
                     await websocket.send(options_dict[5])
                     received_message = await websocket.recv()
                     self.texts.append(received_message)
