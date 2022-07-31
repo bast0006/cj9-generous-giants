@@ -125,22 +125,20 @@ class GameManager:
             return f'Player {pid} added to room {rid}'
 
     async def send_messages_in_chat(self, pid, message: str):
+        """Sends a message to the players in a given room."""
         rid, _ = self.players.get(pid, [-1, None])
 
         if rid == -1:
             print(f'Server message: Player {pid} not found')
-            # return f"Player {pid} not found"
-
+            return f"Player {pid} not found"
         elif rid is None:
             print(f'Server message: Player {pid} not in room')
-            # return f"Player {pid} not in room"
-
+            return f"Player {pid} not in room"
         else:
             await self.broadcast_messages(rid, message)
 
     async def broadcast_messages(self, rid: int, message: str):
         """Broadcast messages to all players in room"""
-
         room = self.rooms.get(rid, None)
         # if room does not exist, room is None
 
@@ -271,7 +269,10 @@ class GameManager:
                     case _:
                         info, remainder_message = message.split(":")
                         pid = int(info.split("###")[-1])
-                        await self.send_messages_in_chat(pid, remainder_message)
+
+                        output = await self.send_messages_in_chat(pid, remainder_message)
+                        if output:
+                            await websocket.send(output)
 
             except Exception as e_mess:
                 print(e_mess)
