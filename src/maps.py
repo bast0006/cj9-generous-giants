@@ -6,6 +6,8 @@ import noise
 import numpy as np
 import pygame
 
+from sprites import ImportantSprites
+
 
 class MapGen:
     """Generator for a map for the game to use.
@@ -133,12 +135,23 @@ class MapSprite:
     def update(self, screen: pygame.Surface, _):
         """Draw the map out on the screen"""
         rects = []
+
+        sprites = ImportantSprites()
+
+        map_sprites = {
+            MapLegend.WATER: sprites.get_water(),
+            MapLegend.GRASS: sprites.get_grass(),
+            MapLegend.FLOWER: sprites.get_flowers(),
+        }
+
         for indexY, row in enumerate(self._map):
             for indexX, colum in enumerate(row):
+                screen.blit(
+                    map_sprites[MapLegend(colum)],
+                    (16 * indexY, 16 * indexX, 16, 16),
+                )
                 rects.append(
-                    pygame.draw.rect(
-                        screen,
-                        self.get_key_color(colum),
+                    pygame.Rect(
                         (16 * indexY, 16 * indexX, 16, 16),
                     )
                 )
