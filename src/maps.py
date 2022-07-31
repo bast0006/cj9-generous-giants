@@ -7,7 +7,7 @@ import numpy as np
 import pygame
 
 
-class mapGen:
+class MapGen:
     """Generator for a map for the game to use.
 
     It first creates a noise map.
@@ -45,7 +45,7 @@ class mapGen:
             ("".join("{:.0f}".format(j) for j in i) for i in mapGenerator.world)
         )
 
-    def generateNoise(self):
+    def generate_noise(self):
         """Generates a noise map."""
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
@@ -81,7 +81,9 @@ class mapGen:
         Take anything past 1/2 of the way between mean and min and convert to 1
         Make the rest of the map 2
         """
-        flowerLevel = ((self.world.max() - self.world.mean()) * 0.65) + self.world.mean()
+        flowerLevel = (
+            (self.world.max() - self.world.mean()) * 0.65
+        ) + self.world.mean()
         waterLevel = ((self.world.min() - self.world.mean()) * 0.65) + self.world.mean()
 
         for i in range(self.shape[0]):
@@ -98,19 +100,19 @@ class mapGen:
         with open(filename, "w") as f:
             f.write(str(self).replace("0", "F").replace("1", "W").replace("2", "G"))
 
-    def _makeMap(self):
+    def _make_map(self):
         """Make a new map."""
-        self.generateNoise()
+        self.generate_noise()
         self.convert()
 
-    def newMap(self, seed: int = None):
+    def new_map(self, seed: int = None):
         """Generate a new map."""
         self.seed = seed or self._seed_generator()
 
-        self._makeMap()
+        self._make_map()
 
 
-class mapLegend(Enum):
+class MapLegend(Enum):
     """Enum for the map file's notation."""
 
     WATER = "W"
@@ -118,7 +120,7 @@ class mapLegend(Enum):
     FLOWER = "F"
 
 
-class mapSprite:
+class MapSprite:
     """Sprite for the map.
 
     It has a position and a sprite.
@@ -126,41 +128,41 @@ class mapSprite:
     """
 
     def __init__(self, mapFileDir):
-        self.registerNewMap(mapFileDir)
+        self.register_new_map(mapFileDir)
 
     def update(self, screen: pygame.Surface, _):
         """Draw the map out on the screen"""
         rects = []
         for indexY, row in enumerate(self._map):
-            for indexX, collum in enumerate(row):
+            for indexX, colum in enumerate(row):
                 rects.append(
                     pygame.draw.rect(
                         screen,
-                        self.getKeyColor(collum),
+                        self.get_key_color(colum),
                         (16 * indexY, 16 * indexX, 16, 16),
                     )
                 )
         return rects
 
-    def getKeyColor(self, key: mapLegend) -> pygame.Color:
+    def get_key_color(self, key: MapLegend) -> pygame.Color:
         """Get the color of a key."""
         color = pygame.Color(0, 0, 0)
         match key:
-            case mapLegend.WATER.value:
+            case MapLegend.WATER.value:
                 color.b = 184
                 color.g = 94
-            case mapLegend.GRASS.value:
+            case MapLegend.GRASS.value:
                 color.g = 55
                 color.r = 13
                 color.b = 13
-            case mapLegend.FLOWER.value:
+            case MapLegend.FLOWER.value:
                 color.r = 255
                 color.g = 3
                 color.b = 62
 
         return color
 
-    def registerNewMap(self, mapFileDir: str):
+    def register_new_map(self, mapFileDir: str):
         """Change the map being used."""
         with open(mapFileDir, "r") as f:
             self._map = list(list(i) for i in (f.read().split("\n")))
@@ -173,10 +175,10 @@ if __name__ == "__main__":
 
     width = 100
     heigth = 100
-    mapGenerator = mapGen((heigth, width))
+    mapGenerator = MapGen((heigth, width))
     print(f"Map generator initialized for a {heigth}x{width} map.\n")
 
-    mapGenerator.generateNoise()
+    mapGenerator.generate_noise()
     print("Noise map generated.\n")
     print(
         "| "
@@ -196,22 +198,22 @@ if __name__ == "__main__":
     with open(exportDir, "r") as f:
         print(f.read())
 
-    sprite = mapSprite(exportDir)
+    sprite = MapSprite(exportDir)
     print("\n\n" + str(sprite._map))
 
     game = Game()
     game.add_sprite(0, sprite)
 
-    def newMap(evt: pygame.event.Event):
+    def new_map(evt: pygame.event.Event):
         """Render a new map when r is pressed."""
         if evt.key == pygame.K_r:
-            mapGenerator.newMap()
+            mapGenerator.new_map()
             print(f"\n\n {mapGenerator}")
             mapGenerator.export(exportDir)
-            sprite.registerNewMap(exportDir)
+            sprite.register_new_map(exportDir)
 
     game.add_handler(
-        newMap,
+        new_map,
         pygame.KEYDOWN,
     )
     game.start()
