@@ -58,6 +58,7 @@ class Character(pygame.sprite.Sprite):
         self.direction = pygame.math.Vector2()
         self.character_index = character_index
         self.movement_speed = movement_speed
+        self.x, self.y = spawn_position
 
     def input(self, event) -> None:
         """
