@@ -268,7 +268,8 @@ class GameManager:
                         output = await self.remove_player(int(pid))
                         await websocket.send(output)
                         raise Exception(f'Game over for player {pid}')
-
+                    case 'Help':
+                        await websocket.send('Use /nick [name], /join [room], and /start!')
                     case _:
                         info, remainder_message = message.split(":")
                         pid = int(info.split("###")[-1])
