@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Tuple
+from typing import Optional, Tuple
 
 import noise
 import numpy as np
@@ -134,9 +134,12 @@ class MapSprite:
     It can be drawn to the screen.
     """
 
-    def __init__(self, mapFileDir):
+    def __init__(self, mapFileDir: Optional[str] = None, x: int = 0, y: int = 0):
         if mapFileDir:
             self.register_new_map(mapFileDir)
+
+        self.x = x
+        self.y = y
 
     def update(self, screen: pygame.Surface, _):
         """Draw the map out on the screen"""
@@ -150,15 +153,15 @@ class MapSprite:
             MapLegend.FLOWER: sprites.get_flowers(),
         }
 
-        for indexY, row in enumerate(self._map):
-            for indexX, colum in enumerate(row):
+        for indexX, row in enumerate(self._map):
+            for indexY, column in enumerate(row):
                 screen.blit(
-                    map_sprites[MapLegend(colum)],
-                    (16 * indexY, 16 * indexX, 16, 16),
+                    map_sprites[MapLegend(column)],
+                    (16 * indexX + self.x, 16 * indexY + self.y, 16, 16),
                 )
                 rects.append(
                     pygame.Rect(
-                        (16 * indexY, 16 * indexX, 16, 16),
+                        (16 * indexX + self.x, 16 * indexY + self.y, 16, 16),
                     )
                 )
         return rects
@@ -240,9 +243,10 @@ if __name__ == "__main__":
         pygame.KEYDOWN,
     )
 
-    player1 = Character(spawn_position=(50, 50), movement_speed=3)
+    player1 = Character(spawn_position=(50, 50))
 
     game.add_sprite(1, player1)
+    game.add_handler(player1.input, pygame.KEYDOWN, pygame.KEYUP)
 
     game.start()
 
