@@ -132,6 +132,9 @@ class GameManager:
             print(f'Server message: Player {pid} not found')
             return f"Player {pid} not found"
         elif rid is None:
+            if message.lstrip().startswith("/"):
+                # / means command, so we ignore it
+                return
             print(f'Server message: Player {pid} not in room')
             return f"Player {pid} not in room"
         else:
