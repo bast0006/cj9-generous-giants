@@ -256,8 +256,9 @@ class Player:
 
     def update_character(self, pid: str, x: int, y: int):
         """Update a character sprite."""
-        if pid == self.pid:
+        if int(pid) == self.pid:
             return  # We already handle our own
+
         self.characters[pid].x = x
         self.characters[pid].y = y
 
