@@ -234,7 +234,8 @@ class GameManager:
         while True:
             try:
                 message = await websocket.recv()    # first message will be 'Get ID'
-                print(f'Received: {message}')
+                if message != 'MoveTo':  # No spam my logs please
+                    print(f'Received: {message}')
 
                 match message:
                     case 'Get ID':
